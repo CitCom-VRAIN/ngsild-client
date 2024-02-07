@@ -4,74 +4,62 @@ import json
 
 
 class Client:
+    protocol = os.environ.get("PROTOCOL")
+    endpoint_cb = os.environ.get("ENDPOINT_CB")
+
     def __init__(self) -> None:
         pass
 
     def get_all_entities_by_type(
-        self, type, service, subservice, token, limit=20, offset=0
+        self,
+        type,
+        context,
+        limit=100,
+        offset=0,
+        service=None,
+        subservice=None,
+        token=None,
     ):
-        protocol = "http"  # os.environ.get("PROTOCOL")
-        endpoint_cb = os.environ.get("ENDPOINT_CB")
 
-        url = "{PROTOCOL}://{ENDPOINT_CB}/ngsi-ld/v1/entities?type={TYPE}&scopeQ={SUBSERVICE}&limit={LIMIT}&offset={OFFSET}&options=count".format(
-            PROTOCOL=protocol,
-            ENDPOINT_CB=endpoint_cb,
-            TYPE=type,
-            SUBSERVICE=subservice,
-            LIMIT=limit,
-            OFFSET=offset,
+        url = "{PROTOCOL}://{ENDPOINT_CB}/ngsi-ld/v1/entities".format(
+            PROTOCOL=self.protocol, ENDPOINT_CB=self.endpoint_cb
         )
 
-        payload = {}
+        payload = {
+            "type": type,
+            "scopeQ": subservice,
+            "limit": limit,
+            "offset": offset,
+            "options": "count",
+        }
         headers = {
             "NGSILD-Tenant": service,  # equals to "Fiware-Service": service,
             "X-Auth-Token": token,
-            "Link": '<https://raw.githubusercontent.com/smart-data-models/dataModel.WasteManagement/master/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+            "Link": '<{CONTEXT}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"'.format(
+                CONTEXT=context
+            ),
             "Accept": "application/ld+json",
         }
 
         response = requests.request(
-            "GET", url, headers=headers, data=payload, verify=False
+            "GET", url, headers=headers, params=payload, verify=False
         )
         return response
 
-    def get_all_entities_by_type_and_georel(
-        self,
-        type,
-        service,
-        subservice,
-        token,
-        georel,
-        geometry,
-        coords,
-        limit=20,
-        offset=0,
-    ):
-        protocol = "http"  # os.environ.get("PROTOCOL")
-        endpoint_cb = os.environ.get("ENDPOINT_CB")
-
-        url = "{PROTOCOL}://{ENDPOINT_CB}/ngsi-ld/v1/entities?type={TYPE}&scopeQ={SUBSERVICE}&limit={LIMIT}&offset={OFFSET}&options=count&georel={GEOREL}&geometry={GEOMETRY}&coords={COORDS}".format(
-            PROTOCOL=protocol,
-            ENDPOINT_CB=endpoint_cb,
-            TYPE=type,
-            SUBSERVICE=subservice,
-            LIMIT=limit,
-            OFFSET=offset,
-            GEOREL=georel,
-            GEOMETRY=geometry,
-            COORDS=coords
+    def upsert_entities(self, data, context):
+        url = "{PROTOCOL}://{ENDPOINT_CB}/ngsi-ld/v1/entityOperations/upsert".format(
+            PROTOCOL=self.protocol, ENDPOINT_CB=self.endpoint_cb
         )
-        print(url)
 
-        payload = {}
+        payload = json.dumps(data)
         headers = {
-            "NGSILD-Tenant": service,  # equals to "Fiware-Service": service,
-            "X-Auth-Token": token,
-            "Link": '<https://raw.githubusercontent.com/smart-data-models/dataModel.WasteManagement/master/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+            "Content-Type": "application/json",
+            "Link": '<{CONTEXT}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"'.format(
+                CONTEXT=context
+            ),
             "Accept": "application/ld+json",
         }
 
-        response = requests.request(
-            "GET", url, headers=headers, data=payload, verify=False
-        )
+        response = requests.request("POST", url, headers=headers, data=payload)
+
         return response
