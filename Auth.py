@@ -11,7 +11,7 @@ class Auth:
 
     def get_auth_token_subservice(self, service, subservice):
         # Get env variables
-        protocol = os.environ.get("PROTOCOL")
+        protocol =  os.environ.get("AUTH_PROTOCOL")
         endpoint_keystone = os.environ.get("ENDPOINT_KEYSTONE")
         username = os.environ.get("AUTH_USER")
         password = os.environ.get("AUTH_PASSWORD")
@@ -45,6 +45,5 @@ class Auth:
         response = requests.request(
             "POST", url, headers=headers, data=payload, verify=False
         )
-
         auth_token_subservice = response.headers["X-Subject-Token"]
         return auth_token_subservice
