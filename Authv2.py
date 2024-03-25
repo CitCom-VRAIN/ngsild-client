@@ -3,7 +3,7 @@ import requests
 import json
 
 
-class Auth:
+class Authv2:
     auth_token_subservice = None
 
     def __init__(self) -> None:
